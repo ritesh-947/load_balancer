@@ -282,10 +282,10 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 <div class="fw z1 controls-bar">
   <span class="ctrl-lbl">Algorithm:</span>
   <select id="algo-sel">
-    <option value="weighted">Weighted Dijkstra — BW(40%) + Latency(35%) + Loss(25%) + Util</option>
-    <option value="minlatency">Minimum Latency — Dijkstra on latency only</option>
-    <option value="roundrobin">Round Robin — Cycle S2 → S3 → S4 branch</option>
-    <option value="leastconn">Least Connections — Fewest in-flight packets per branch</option>
+    <option value="roundrobin">Round Robin</option>
+    <option value="weighted_full">Weighted (Bandwidth + Latency + Packet Loss)</option>
+    <option value="weighted_bw">Weighted (Only Bandwidth)</option>
+    <option value="leastconn">Least Connections</option>
   </select>
   <div class="sep"></div>
   <div class="spd-group">
@@ -534,15 +534,19 @@ const BW_MAX=10000,LAT_MAX=20,LOSS_MAX=0.05;
 
 function g(id){return +document.getElementById(id).value;}
 
-function costWeighted(u,v){
+function costWeightedFull(u,v){
   const e=EDGE_MAP[`${u}-${v}`]; if(!e)return Infinity;
   if(failedLinks.has(`${u}-${v}`))return Infinity;
+
   const util=edgeUtil[`${u}-${v}`]||0;
-  const nBw  =1-Math.min(e.bw,  BW_MAX)  /BW_MAX;
-  const nLat =  Math.min(e.lat, LAT_MAX) /LAT_MAX;
-  const nLoss=  Math.min(e.loss,LOSS_MAX)/LOSS_MAX;
+  const nBw  =1-Math.min(e.bw,BW_MAX)/BW_MAX;
+  const nLat = Math.min(e.lat,LAT_MAX)/LAT_MAX;
+  const nLoss= Math.min(e.loss,LOSS_MAX)/LOSS_MAX;
+
   return g('w-bw')*nBw + g('w-lat')*nLat + g('w-loss')*nLoss + g('w-util')*util;
 }
+
+
 function costLatency(u,v){
   if(failedLinks.has(`${u}-${v}`))return Infinity;
   const e=EDGE_MAP[`${u}-${v}`]; return e?e.lat/LAT_MAX:Infinity;
@@ -622,24 +626,46 @@ const BRANCH_COL={S2:'#a78bfa',S3:'#34d399',S4:'#fbbf24'};
 function getL1(path){return path.find(n=>['S2','S3','S4'].includes(n))||null;}
 function pathColor(path){const b=getL1(path);return b?BRANCH_COL[b]:'#60a5fa';}
 
+
+function costBandwidthOnly(u,v){
+  const e = EDGE_MAP[`${u}-${v}`];
+  if(!e) return Infinity;
+  if(failedLinks.has(`${u}-${v}`)) return Infinity;
+
+  // Higher bandwidth = lower cost
+  return 1 - (Math.min(e.bw, BW_MAX) / BW_MAX);
+}
+
 function selectPath(algo,src){
-  if(algo==='weighted')  return dijkstra(src,'DST',costWeighted);
-  if(algo==='minlatency')return dijkstra(src,'DST',costLatency);
-  if(algo==='roundrobin'){
-    const branches=['S2','S3','S4'].filter(b=>!failedLinks.has(`S1-${b}`));
-    if(!branches.length)return dijkstra(src,'DST',costWeighted);
-    const branch=branches[rrIdx++%branches.length];
-    const rest=dijkstra(branch,'DST',costWeighted);
-    return rest.length?[src,'S1',...rest]:[];
-  }
-  if(algo==='leastconn'){
-    const branches=['S2','S3','S4'].filter(b=>!failedLinks.has(`S1-${b}`));
-    if(!branches.length)return dijkstra(src,'DST',costWeighted);
-    const branch=branches.reduce((a,b)=>(branchConn[a]||0)<=(branchConn[b]||0)?a:b);
-    const rest=dijkstra(branch,'DST',costWeighted);
-    return rest.length?[src,'S1',...rest]:[];
-  }
-  return[];
+
+if(algo==='weighted_full')
+  return dijkstra(src,'DST',costWeightedFull);
+
+if(algo==='weighted_bw')
+  return dijkstra(src,'DST',costBandwidthOnly);
+
+if(algo==='roundrobin'){
+  const branches=['S2','S3','S4'].filter(b=>!failedLinks.has(`S1-${b}`));
+  if(!branches.length) return dijkstra(src,'DST',costWeightedFull);
+
+  const branch=branches[rrIdx++%branches.length];
+  const rest=dijkstra(branch,'DST',costWeightedFull);
+  return rest.length?[src,'S1',...rest]:[];
+}
+
+if(algo==='leastconn'){
+  const branches=['S2','S3','S4'].filter(b=>!failedLinks.has(`S1-${b}`));
+  if(!branches.length) return dijkstra(src,'DST',costWeightedFull);
+
+  const branch=branches.reduce((a,b)=>
+    (branchConn[a]||0) <= (branchConn[b]||0) ? a : b
+  );
+
+  const rest=dijkstra(branch,'DST',costWeightedFull);
+  return rest.length?[src,'S1',...rest]:[];
+}
+
+return [];
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -935,8 +961,13 @@ document.getElementById('auto-rate').addEventListener('input',function(){
   if(autoTmr){clearInterval(autoTmr);autoTmr=setInterval(sendPacket,+this.value);}
 });
 document.getElementById('algo-sel').addEventListener('change',function(){
-  const labels={weighted:'Weighted Dijkstra',minlatency:'Min Latency',roundrobin:'Round Robin',leastconn:'Least Connections'};
-  document.getElementById('algo-chip').textContent=labels[this.value]||this.value;
+  const labels={
+    roundrobin:'Round Robin',
+    weighted_full:'Weighted (BW + Lat + Loss)',
+    weighted_bw:'Weighted (Bandwidth Only)',
+    leastconn:'Least Connections'
+  };
+  document.getElementById('algo-chip').textContent=labels[this.value];
 });
 
 /* ═══════════════════════════════════════════════════════

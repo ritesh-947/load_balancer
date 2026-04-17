@@ -226,32 +226,34 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 .log-msg{font-size:.68rem;color:var(--muted);flex:1}
 
 /* Eff Chart */
-.bottom-panel{display:grid;grid-template-columns:3fr 2fr;gap:12px;align-items:stretch;}
+.bottom-panel{display:grid;grid-template-columns:1fr;gap:12px;align-items:stretch;}
+.charts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
 .eff-card{
   background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 20px;
   display:flex;flex-direction:column;
 }
-.eff-legend{display:flex;gap:16px;font-size:.7rem;color:var(--text);font-weight:500;margin-bottom:12px;flex-wrap:wrap;}
-.eff-leg-item{display:flex;align-items:center;gap:6px;}
-.eff-dot{width:12px;height:12px;border-radius:3px;}
-.eff-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:20px;}
+.eff-legend{display:flex;gap:10px;font-size:.65rem;color:var(--text);font-weight:500;margin-bottom:8px;flex-wrap:wrap;}
+.eff-leg-item{display:flex;align-items:center;gap:5px;}
+.eff-dot{width:10px;height:10px;border-radius:3px;}
+.eff-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px;}
 .eff-chart{position:relative;height:170px;padding-left:45px;padding-bottom:24px;margin-top:auto;}
-.eff-y-axis{position:absolute;left:0;top:-4px;bottom:24px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;width:35px;font-size:.65rem;color:var(--muted);font-family:var(--mono);}
-.eff-y-label{position:absolute;left:-30px;top:calc(50% - 12px);transform:translateY(-50%) rotate(-90deg);font-size:.65rem;color:var(--muted);white-space:nowrap;letter-spacing:0.04em;}
+.eff-y-axis{position:absolute;left:0;top:-4px;bottom:24px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;width:35px;font-size:.6rem;color:var(--muted);font-family:var(--mono);}
+.eff-y-label{position:absolute;left:-30px;top:calc(50% - 12px);transform:translateY(-50%) rotate(-90deg);font-size:.6rem;color:var(--muted);white-space:nowrap;letter-spacing:0.04em;}
 .eff-grid{position:absolute;inset:0 0 24px 45px;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none;border-bottom:1px solid var(--border);border-left:1px solid var(--border);}
 .eff-grid-line{width:100%;height:1px;background:rgba(255,255,255,0.06);}
 .eff-bars{position:absolute;inset:0 0 24px 45px;display:flex;align-items:flex-end;justify-content:space-around;padding:0 6%;}
 .eff-bar{width:22%;border-radius:4px 4px 0 0;position:relative;z-index:1;transition:height 0.5s ease;box-shadow:inset -2px 0 6px rgba(0,0,0,0.1), inset 0 3px 6px rgba(255,255,255,0.25);}
-.eff-x-axis{position:absolute;left:45px;right:0;bottom:0;height:20px;display:flex;justify-content:space-around;align-items:flex-end;font-size:.7rem;color:var(--muted);padding:0 6%;}
+.eff-x-axis{position:absolute;left:45px;right:0;bottom:0;height:20px;display:flex;justify-content:space-around;align-items:flex-end;font-size:.65rem;color:var(--muted);padding:0 6%;}
 .eff-x-lbl{width:22%;text-align:center;}
 
 @media(max-width:900px){
   .adv-panel{grid-template-columns:1fr 1fr}
-  .stats-grid{grid-template-columns:repeat(3,1fr);}.bottom-panel{grid-template-columns:1fr;}
+  .stats-grid{grid-template-columns:repeat(3,1fr);}.bottom-panel{grid-template-columns:1fr;}.charts-grid{grid-template-columns:1fr 1fr;}
 }
 @media(max-width:600px){
   .adv-panel{grid-template-columns:1fr}
   .stats-grid{grid-template-columns:1fr 1fr}
+  .charts-grid{grid-template-columns:1fr;}
 }
 </style>
 </head>
@@ -358,8 +360,8 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 
     <div class="slider-row" style="margin-top:4px">
       <span class="slider-lbl" style="color:#a78bfa">Util Inc</span>
-      <input type="range" id="util-inc" min="0.05" max="0.80" step="0.05" value="0.40" style="width:auto;flex:1">
-      <span class="slider-val" id="v-inc">0.40</span>
+      <input type="range" id="util-inc" min="0.05" max="0.80" step="0.05" value="0.55" style="width:auto;flex:1">
+      <span class="slider-val" id="v-inc">0.55</span>
     </div>
     <div class="slider-row">
       <span class="slider-lbl" style="color:#a78bfa">Decay /s</span>
@@ -463,47 +465,95 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.25)}
   <div class="sc"><div class="sc-val mono" id="s-latency">—</div><div class="sc-lbl">Last Latency</div></div>
 </div>
 
-<!-- ── Bottom Panel ─────────────────────────────────────── -->
-<div class="fw z1 bottom-panel">
-  <!-- Event Log -->
-  <div class="log-card">
-    <div class="log-hdr">
-      <div class="log-title">Controller Event Log</div>
-      <button class="log-clear" onclick="clearLog()">Clear</button>
-    </div>
-    <div class="log-body" id="log-body">
-      <div style="color:var(--dim);font-size:.72rem;padding:6px 4px">Waiting for events…</div>
-    </div>
+<!-- ── Event Log ─────────────────────────────────────── -->
+<div class="fw z1 log-card">
+  <div class="log-hdr">
+    <div class="log-title">Controller Event Log</div>
+    <button class="log-clear" onclick="clearLog()">Clear</button>
   </div>
+  <div class="log-body" id="log-body">
+    <div style="color:var(--dim);font-size:.72rem;padding:6px 4px">Waiting for events…</div>
+  </div>
+</div>
 
-  <!-- Efficiency Chart -->
+<!-- ── Comparison Charts ──────────────────────────────── -->
+<div class="fw z1 charts-grid">
+
+  <!-- 1. Bandwidth Efficiency -->
   <div class="eff-card">
     <div class="eff-legend">
       <div class="eff-leg-item"><div class="eff-dot" style="background:#3b82f6;"></div>Round Robin</div>
-      <div class="eff-leg-item"><div class="eff-dot" style="background:#f59e0b;"></div>Weighted BW-only</div>
-      <div class="eff-leg-item"><div class="eff-dot" style="background:#10b981;"></div>Weighted BW+Lat+Loss</div>
+      <div class="eff-leg-item"><div class="eff-dot" style="background:#f59e0b;"></div>BW-only</div>
+      <div class="eff-leg-item"><div class="eff-dot" style="background:#10b981;"></div>BW+Lat+Loss</div>
     </div>
     <div class="eff-title">BANDWIDTH EFFICIENCY (%)</div>
     <div class="eff-chart">
       <div class="eff-y-label">BW efficiency %</div>
-      <div class="eff-y-axis">
-        <span>100%</span><span>90%</span><span>80%</span><span>70%</span><span>60%</span><span>50%</span><span>40%</span><span>30%</span><span>20%</span><span>10%</span><span>0%</span>
-      </div>
-      <div class="eff-grid">
-        <div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line" style="background:transparent"></div>
-      </div>
+      <div class="eff-y-axis"><span>100%</span><span>80%</span><span>60%</span><span>40%</span><span>20%</span><span>0%</span></div>
+      <div class="eff-grid"><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line" style="background:transparent"></div></div>
       <div class="eff-bars">
-        <div class="eff-bar" id="eff-bar-rr"  style="height:2%;background:#3b82f6;" title="RR"></div>
-        <div class="eff-bar" id="eff-bar-bw"  style="height:2%;background:#f59e0b;" title="BW"></div>
-        <div class="eff-bar" id="eff-bar-w3"  style="height:2%;background:#10b981;" title="W3"></div>
+        <div class="eff-bar" id="eff-bar-rr" style="height:2%;background:#3b82f6;"></div>
+        <div class="eff-bar" id="eff-bar-bw" style="height:2%;background:#f59e0b;"></div>
+        <div class="eff-bar" id="eff-bar-w3" style="height:2%;background:#10b981;"></div>
       </div>
       <div class="eff-x-axis">
-        <div class="eff-x-lbl"><div>RR</div><div id="eff-pct-rr" style="color:#3b82f6;font-size:.65rem;font-weight:700;">0%</div></div>
-        <div class="eff-x-lbl"><div>BW</div><div id="eff-pct-bw" style="color:#f59e0b;font-size:.65rem;font-weight:700;">0%</div></div>
-        <div class="eff-x-lbl"><div>W3</div><div id="eff-pct-w3" style="color:#10b981;font-size:.65rem;font-weight:700;">0%</div></div>
+        <div class="eff-x-lbl"><div>RR</div><div id="eff-pct-rr" style="color:#3b82f6;font-size:.65rem;font-weight:700">0%</div></div>
+        <div class="eff-x-lbl"><div>BW</div><div id="eff-pct-bw" style="color:#f59e0b;font-size:.65rem;font-weight:700">0%</div></div>
+        <div class="eff-x-lbl"><div>W3</div><div id="eff-pct-w3" style="color:#10b981;font-size:.65rem;font-weight:700">0%</div></div>
       </div>
     </div>
   </div>
+
+  <!-- 2. Avg Latency -->
+  <div class="eff-card">
+    <div class="eff-legend">
+      <div class="eff-leg-item"><div class="eff-dot" style="background:#3b82f6;"></div>Round Robin</div>
+      <div class="eff-leg-item"><div class="eff-dot" style="background:#f59e0b;"></div>BW-only</div>
+      <div class="eff-leg-item"><div class="eff-dot" style="background:#10b981;"></div>BW+Lat+Loss</div>
+    </div>
+    <div class="eff-title">AVG LATENCY (ms) — lower is better</div>
+    <div class="eff-chart">
+      <div class="eff-y-label">Avg latency ms</div>
+      <div class="eff-y-axis" id="lat-y-axis"><span>50</span><span>40</span><span>30</span><span>20</span><span>10</span><span>0</span></div>
+      <div class="eff-grid"><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line" style="background:transparent"></div></div>
+      <div class="eff-bars">
+        <div class="eff-bar" id="lat-bar-rr" style="height:2%;background:#3b82f6;"></div>
+        <div class="eff-bar" id="lat-bar-bw" style="height:2%;background:#f59e0b;"></div>
+        <div class="eff-bar" id="lat-bar-w3" style="height:2%;background:#10b981;"></div>
+      </div>
+      <div class="eff-x-axis">
+        <div class="eff-x-lbl"><div>RR</div><div id="lat-pct-rr" style="color:#3b82f6;font-size:.65rem;font-weight:700">0ms</div></div>
+        <div class="eff-x-lbl"><div>BW</div><div id="lat-pct-bw" style="color:#f59e0b;font-size:.65rem;font-weight:700">0ms</div></div>
+        <div class="eff-x-lbl"><div>W3</div><div id="lat-pct-w3" style="color:#10b981;font-size:.65rem;font-weight:700">0ms</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Packet Loss Rate -->
+  <div class="eff-card">
+    <div class="eff-legend">
+      <div class="eff-leg-item"><div class="eff-dot" style="background:#3b82f6;"></div>Round Robin</div>
+      <div class="eff-leg-item"><div class="eff-dot" style="background:#f59e0b;"></div>BW-only</div>
+      <div class="eff-leg-item"><div class="eff-dot" style="background:#10b981;"></div>BW+Lat+Loss</div>
+    </div>
+    <div class="eff-title">PACKET LOSS RATE (%) — lower is better</div>
+    <div class="eff-chart">
+      <div class="eff-y-label">Loss rate %</div>
+      <div class="eff-y-axis"><span>50%</span><span>40%</span><span>30%</span><span>20%</span><span>10%</span><span>0%</span></div>
+      <div class="eff-grid"><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line" style="background:transparent"></div></div>
+      <div class="eff-bars">
+        <div class="eff-bar" id="loss-bar-rr" style="height:2%;background:#3b82f6;"></div>
+        <div class="eff-bar" id="loss-bar-bw" style="height:2%;background:#f59e0b;"></div>
+        <div class="eff-bar" id="loss-bar-w3" style="height:2%;background:#10b981;"></div>
+      </div>
+      <div class="eff-x-axis">
+        <div class="eff-x-lbl"><div>RR</div><div id="loss-pct-rr" style="color:#3b82f6;font-size:.65rem;font-weight:700">0%</div></div>
+        <div class="eff-x-lbl"><div>BW</div><div id="loss-pct-bw" style="color:#f59e0b;font-size:.65rem;font-weight:700">0%</div></div>
+        <div class="eff-x-lbl"><div>W3</div><div id="loss-pct-w3" style="color:#10b981;font-size:.65rem;font-weight:700">0%</div></div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -536,13 +586,13 @@ const NODES={
 const FWD_EDGES=[
   ...Array.from({length:10},(_,i)=>({f:`H${i+1}`,t:'S1',bw:1000,lat:2,loss:0.005})),
   {f:'S1',t:'S2',bw:10000,lat:1,loss:0.001},{f:'S1',t:'S3',bw:10000,lat:1,loss:0.001},{f:'S1',t:'S4',bw:10000,lat:1,loss:0.001},
-  {f:'S2',t:'S5',bw:500,lat:5,loss:0.020},{f:'S2',t:'S6',bw:800,lat:4,loss:0.010},
-  {f:'S3',t:'S5',bw:600,lat:6,loss:0.030},{f:'S3',t:'S6',bw:700,lat:4,loss:0.010},{f:'S3',t:'S7',bw:800,lat:3,loss:0.010},
-  {f:'S4',t:'S7',bw:600,lat:5,loss:0.020},{f:'S4',t:'S8',bw:900,lat:3,loss:0.005},
-  {f:'S5',t:'S9',bw:400,lat:8,loss:0.040},{f:'S5',t:'S10',bw:600,lat:6,loss:0.020},
-  {f:'S6',t:'S9',bw:700,lat:5,loss:0.020},{f:'S6',t:'S10',bw:800,lat:4,loss:0.010},{f:'S6',t:'S11',bw:700,lat:4,loss:0.015},
-  {f:'S7',t:'S10',bw:600,lat:5,loss:0.020},{f:'S7',t:'S11',bw:800,lat:4,loss:0.010},{f:'S7',t:'S12',bw:700,lat:5,loss:0.020},
-  {f:'S8',t:'S11',bw:600,lat:6,loss:0.020},{f:'S8',t:'S12',bw:900,lat:3,loss:0.005},
+  {f:'S2',t:'S5',bw:800,lat:3.5,loss:0.010},{f:'S2',t:'S6',bw:850,lat:3.2,loss:0.008},
+  {f:'S3',t:'S5',bw:820,lat:3.4,loss:0.009},{f:'S3',t:'S6',bw:840,lat:3.3,loss:0.008},{f:'S3',t:'S7',bw:860,lat:3.1,loss:0.007},
+  {f:'S4',t:'S7',bw:810,lat:3.5,loss:0.010},{f:'S4',t:'S8',bw:880,lat:3.0,loss:0.005},
+  {f:'S5',t:'S9',bw:700,lat:4.5,loss:0.015},{f:'S5',t:'S10',bw:750,lat:4.2,loss:0.012},
+  {f:'S6',t:'S9',bw:780,lat:4.0,loss:0.010},{f:'S6',t:'S10',bw:820,lat:3.8,loss:0.008},{f:'S6',t:'S11',bw:740,lat:4.1,loss:0.011},
+  {f:'S7',t:'S10',bw:760,lat:4.3,loss:0.013},{f:'S7',t:'S11',bw:800,lat:3.9,loss:0.009},{f:'S7',t:'S12',bw:720,lat:4.4,loss:0.014},
+  {f:'S8',t:'S11',bw:790,lat:4.0,loss:0.010},{f:'S8',t:'S12',bw:890,lat:3.2,loss:0.006},
   {f:'S9',t:'S13',bw:500,lat:7,loss:0.030},{f:'S9',t:'S14',bw:600,lat:6,loss:0.020},
   {f:'S10',t:'S13',bw:700,lat:5,loss:0.020},{f:'S10',t:'S14',bw:800,lat:4,loss:0.010},{f:'S10',t:'S15',bw:700,lat:5,loss:0.020},
   {f:'S11',t:'S14',bw:600,lat:5,loss:0.020},{f:'S11',t:'S15',bw:800,lat:4,loss:0.010},{f:'S11',t:'S16',bw:700,lat:5,loss:0.025},
@@ -596,7 +646,8 @@ function costWeightedFull(u,v){
   const nLat = Math.min(e.lat,LAT_MAX)/LAT_MAX;
   const nLoss= Math.min(e.loss,LOSS_MAX)/LOSS_MAX;
 
-  return g('w-bw')*nBw + g('w-lat')*nLat + g('w-loss')*nLoss + g('w-util')*util;
+  const jitter = Math.random() * 0.05; // Increased jitter for better path exploration
+  return g('w-bw')*nBw + g('w-lat')*nLat + g('w-loss')*nLoss + 5.0 * g('w-util')*util + jitter; // Heavily bumped utilization multiplier to 5.0
 }
 
 
@@ -688,8 +739,8 @@ function costBandwidthOnly(u,v){
   // Higher bandwidth = lower cost; also penalise congested links + small jitter to break ties
   const nBw  = 1 - (Math.min(e.bw, BW_MAX) / BW_MAX);
   const util = edgeUtil[`${u}-${v}`] || 0;
-  const jitter = Math.random() * 0.005;   // tiny random nudge so equal-BW paths all get chosen
-  return nBw + 0.3 * util + jitter;
+  const jitter = Math.random() * 0.05;   // increased jitter so equal-BW paths all get chosen
+  return nBw + 1.2 * util + jitter; // Increased util penalty to force branch switching
 }
 
 function selectPath(algo,src){
@@ -984,10 +1035,10 @@ function calcPathLatency(path){
 
 // Per-algo efficiency tracking
 const algoStats={
-  roundrobin:  {sent:0,delivered:0},
-  weighted_bw: {sent:0,delivered:0},
-  weighted_full:{sent:0,delivered:0},
-  leastconn:   {sent:0,delivered:0}
+  roundrobin:  {sent:0,delivered:0,totalLat:0,pathCount:0},
+  weighted_bw: {sent:0,delivered:0,totalLat:0,pathCount:0},
+  weighted_full:{sent:0,delivered:0,totalLat:0,pathCount:0},
+  leastconn:   {sent:0,delivered:0,totalLat:0,pathCount:0}
 };
 let _lastAlgo='roundrobin';
 
@@ -1007,15 +1058,39 @@ function updateStats(path){
 
 function updateEffChart(){
   const algos=['roundrobin','weighted_bw','weighted_full'];
-  const ids=['eff-bar-rr','eff-bar-bw','eff-bar-w3'];
-  const lblIds=['eff-pct-rr','eff-pct-bw','eff-pct-w3'];
+  const sfx=['rr','bw','w3'];
+
+  // 1. BW Efficiency (delivered / sent * 100)
   for(let i=0;i<algos.length;i++){
     const st=algoStats[algos[i]];
     const pct=st.sent>0?Math.round(st.delivered/st.sent*100):0;
-    const el=document.getElementById(ids[i]);
-    const lbl=document.getElementById(lblIds[i]);
-    if(el){el.style.height=Math.max(pct,2)+'%';}
-    if(lbl)lbl.textContent=pct+'%';
+    const bar=document.getElementById('eff-bar-'+sfx[i]);
+    const lbl=document.getElementById('eff-pct-'+sfx[i]);
+    if(bar) bar.style.height=Math.max(pct,2)+'%';
+    if(lbl) lbl.textContent=pct+'%';
+  }
+
+  // 2. Avg Latency (totalLat / pathCount), scaled to max 50ms
+  const LAT_MAX_CHART=50;
+  for(let i=0;i<algos.length;i++){
+    const st=algoStats[algos[i]];
+    const avg=st.pathCount>0?(st.totalLat/st.pathCount):0;
+    const pct=Math.min(avg/LAT_MAX_CHART*100,100);
+    const bar=document.getElementById('lat-bar-'+sfx[i]);
+    const lbl=document.getElementById('lat-pct-'+sfx[i]);
+    if(bar) bar.style.height=Math.max(pct,2)+'%';
+    if(lbl) lbl.textContent=avg.toFixed(1)+'ms';
+  }
+
+  // 3. Packet Loss Rate ((sent - delivered) / sent * 100)
+  for(let i=0;i<algos.length;i++){
+    const st=algoStats[algos[i]];
+    const loss=st.sent>0?Math.round((st.sent-st.delivered)/st.sent*100):0;
+    const pctH=Math.min(loss/50*100,100);  // scale: 50% loss = full bar
+    const bar=document.getElementById('loss-bar-'+sfx[i]);
+    const lbl=document.getElementById('loss-pct-'+sfx[i]);
+    if(bar) bar.style.height=Math.max(pctH,2)+'%';
+    if(lbl) lbl.textContent=loss+'%';
   }
 }
 
@@ -1098,7 +1173,11 @@ function sendPacket(){
   const pkt=new Packet(path,color);
   livePackets.push(pkt);
   packetsSent++;
-  if(algoStats[algo])algoStats[algo].sent++;
+  if(algoStats[algo]){
+    algoStats[algo].sent++;
+    algoStats[algo].totalLat+=calcPathLatency(path);
+    algoStats[algo].pathCount++;
+  }
   updateUtil(path);
 
   if(branch){

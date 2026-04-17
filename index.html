@@ -187,7 +187,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 .br-util-label{font-size:.62rem;color:var(--dim);margin-top:1px}
 
 /* Stats Row */
-.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.stats-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
 .sc{
   background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);
   padding:14px 16px;position:relative;overflow:hidden;transition:transform .18s,border-color .18s;
@@ -205,13 +205,13 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 /* Event Log */
 .log-card{
   background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px 14px;
-  display:flex;flex-direction:column;gap:8px;max-height:230px;
+  display:flex;flex-direction:column;gap:8px;height:100%;min-height:240px;
 }
 .log-hdr{display:flex;align-items:center;justify-content:space-between}
 .log-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
 .log-clear{background:none;border:none;color:var(--dim);font-size:.68rem;font-family:var(--font);cursor:pointer;transition:color .2s}
 .log-clear:hover{color:var(--muted)}
-.log-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:1px}
+.log-body{flex:1 1 0;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:1px}
 .log-body::-webkit-scrollbar{width:3px}
 .log-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
 .log-entry{display:flex;gap:8px;align-items:baseline;padding:2px 4px;border-radius:4px;animation:logIn .2s ease-out}
@@ -225,9 +225,29 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.25)}
 .t-err  {background:rgba(239,68,68,.12);color:#f87171}
 .log-msg{font-size:.68rem;color:var(--muted);flex:1}
 
+/* Eff Chart */
+.bottom-panel{display:grid;grid-template-columns:3fr 2fr;gap:12px;align-items:stretch;}
+.eff-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 20px;
+  display:flex;flex-direction:column;
+}
+.eff-legend{display:flex;gap:16px;font-size:.7rem;color:var(--text);font-weight:500;margin-bottom:12px;flex-wrap:wrap;}
+.eff-leg-item{display:flex;align-items:center;gap:6px;}
+.eff-dot{width:12px;height:12px;border-radius:3px;}
+.eff-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:20px;}
+.eff-chart{position:relative;height:170px;padding-left:45px;padding-bottom:24px;margin-top:auto;}
+.eff-y-axis{position:absolute;left:0;top:-4px;bottom:24px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;width:35px;font-size:.65rem;color:var(--muted);font-family:var(--mono);}
+.eff-y-label{position:absolute;left:-30px;top:calc(50% - 12px);transform:translateY(-50%) rotate(-90deg);font-size:.65rem;color:var(--muted);white-space:nowrap;letter-spacing:0.04em;}
+.eff-grid{position:absolute;inset:0 0 24px 45px;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none;border-bottom:1px solid var(--border);border-left:1px solid var(--border);}
+.eff-grid-line{width:100%;height:1px;background:rgba(255,255,255,0.06);}
+.eff-bars{position:absolute;inset:0 0 24px 45px;display:flex;align-items:flex-end;justify-content:space-around;padding:0 6%;}
+.eff-bar{width:22%;border-radius:4px 4px 0 0;position:relative;z-index:1;transition:height 0.5s ease;box-shadow:inset -2px 0 6px rgba(0,0,0,0.1), inset 0 3px 6px rgba(255,255,255,0.25);}
+.eff-x-axis{position:absolute;left:45px;right:0;bottom:0;height:20px;display:flex;justify-content:space-around;align-items:flex-end;font-size:.7rem;color:var(--muted);padding:0 6%;}
+.eff-x-lbl{width:22%;text-align:center;}
+
 @media(max-width:900px){
   .adv-panel{grid-template-columns:1fr 1fr}
-  .stats-grid{grid-template-columns:repeat(3,1fr)}
+  .stats-grid{grid-template-columns:repeat(3,1fr);}.bottom-panel{grid-template-columns:1fr;}
 }
 @media(max-width:600px){
   .adv-panel{grid-template-columns:1fr}
@@ -440,16 +460,49 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.25)}
   <div class="sc sc-bad"><div class="sc-val" id="s-dropped">0</div><div class="sc-lbl">Dropped</div></div>
   <div class="sc"><div class="sc-val mono" id="s-hops">—</div><div class="sc-lbl">Last Hops</div></div>
   <div class="sc sc-path"><div class="sc-val" id="s-path">—</div><div class="sc-lbl">Last Path</div></div>
+  <div class="sc"><div class="sc-val mono" id="s-latency">—</div><div class="sc-lbl">Last Latency</div></div>
 </div>
 
-<!-- ── Event Log ─────────────────────────────────────── -->
-<div class="fw z1 log-card">
-  <div class="log-hdr">
-    <div class="log-title">Controller Event Log</div>
-    <button class="log-clear" onclick="clearLog()">Clear</button>
+<!-- ── Bottom Panel ─────────────────────────────────────── -->
+<div class="fw z1 bottom-panel">
+  <!-- Event Log -->
+  <div class="log-card">
+    <div class="log-hdr">
+      <div class="log-title">Controller Event Log</div>
+      <button class="log-clear" onclick="clearLog()">Clear</button>
+    </div>
+    <div class="log-body" id="log-body">
+      <div style="color:var(--dim);font-size:.72rem;padding:6px 4px">Waiting for events…</div>
+    </div>
   </div>
-  <div class="log-body" id="log-body">
-    <div style="color:var(--dim);font-size:.72rem;padding:6px 4px">Waiting for events…</div>
+
+  <!-- Efficiency Chart -->
+  <div class="eff-card">
+    <div class="eff-legend">
+      <div class="eff-leg-item"><div class="eff-dot" style="background:#3b82f6;"></div>Round Robin</div>
+      <div class="eff-leg-item"><div class="eff-dot" style="background:#f59e0b;"></div>Weighted BW-only</div>
+      <div class="eff-leg-item"><div class="eff-dot" style="background:#10b981;"></div>Weighted BW+Lat+Loss</div>
+    </div>
+    <div class="eff-title">BANDWIDTH EFFICIENCY (%)</div>
+    <div class="eff-chart">
+      <div class="eff-y-label">BW efficiency %</div>
+      <div class="eff-y-axis">
+        <span>100%</span><span>90%</span><span>80%</span><span>70%</span><span>60%</span><span>50%</span><span>40%</span><span>30%</span><span>20%</span><span>10%</span><span>0%</span>
+      </div>
+      <div class="eff-grid">
+        <div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line"></div><div class="eff-grid-line" style="background:transparent"></div>
+      </div>
+      <div class="eff-bars">
+        <div class="eff-bar" id="eff-bar-rr"  style="height:2%;background:#3b82f6;" title="RR"></div>
+        <div class="eff-bar" id="eff-bar-bw"  style="height:2%;background:#f59e0b;" title="BW"></div>
+        <div class="eff-bar" id="eff-bar-w3"  style="height:2%;background:#10b981;" title="W3"></div>
+      </div>
+      <div class="eff-x-axis">
+        <div class="eff-x-lbl"><div>RR</div><div id="eff-pct-rr" style="color:#3b82f6;font-size:.65rem;font-weight:700;">0%</div></div>
+        <div class="eff-x-lbl"><div>BW</div><div id="eff-pct-bw" style="color:#f59e0b;font-size:.65rem;font-weight:700;">0%</div></div>
+        <div class="eff-x-lbl"><div>W3</div><div id="eff-pct-w3" style="color:#10b981;font-size:.65rem;font-weight:700;">0%</div></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -632,8 +685,11 @@ function costBandwidthOnly(u,v){
   if(!e) return Infinity;
   if(failedLinks.has(`${u}-${v}`)) return Infinity;
 
-  // Higher bandwidth = lower cost
-  return 1 - (Math.min(e.bw, BW_MAX) / BW_MAX);
+  // Higher bandwidth = lower cost; also penalise congested links + small jitter to break ties
+  const nBw  = 1 - (Math.min(e.bw, BW_MAX) / BW_MAX);
+  const util = edgeUtil[`${u}-${v}`] || 0;
+  const jitter = Math.random() * 0.005;   // tiny random nudge so equal-BW paths all get chosen
+  return nBw + 0.3 * util + jitter;
 }
 
 function selectPath(algo,src){
@@ -917,6 +973,24 @@ let packetsSent=0,packetsDelivered=0,packetsDropped=0;
 
 function flash(id){const el=document.getElementById(id);if(!el)return;el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');}
 
+function calcPathLatency(path){
+  let ms=0;
+  for(let i=0;i<path.length-1;i++){
+    const e=EDGE_MAP[`${path[i]}-${path[i+1]}`];
+    if(e)ms+=e.lat;
+  }
+  return ms;
+}
+
+// Per-algo efficiency tracking
+const algoStats={
+  roundrobin:  {sent:0,delivered:0},
+  weighted_bw: {sent:0,delivered:0},
+  weighted_full:{sent:0,delivered:0},
+  leastconn:   {sent:0,delivered:0}
+};
+let _lastAlgo='roundrobin';
+
 function updateStats(path){
   document.getElementById('s-sent').textContent=packetsSent;
   document.getElementById('s-delivered').textContent=packetsDelivered;
@@ -924,8 +998,25 @@ function updateStats(path){
   if(path){
     document.getElementById('s-hops').textContent=(path.length-1)+' hops';
     document.getElementById('s-path').textContent=path.join('→');
+    const ms=calcPathLatency(path);
+    document.getElementById('s-latency').textContent=ms+'ms';
   }
   flash('s-sent');
+  updateEffChart();
+}
+
+function updateEffChart(){
+  const algos=['roundrobin','weighted_bw','weighted_full'];
+  const ids=['eff-bar-rr','eff-bar-bw','eff-bar-w3'];
+  const lblIds=['eff-pct-rr','eff-pct-bw','eff-pct-w3'];
+  for(let i=0;i<algos.length;i++){
+    const st=algoStats[algos[i]];
+    const pct=st.sent>0?Math.round(st.delivered/st.sent*100):0;
+    const el=document.getElementById(ids[i]);
+    const lbl=document.getElementById(lblIds[i]);
+    if(el){el.style.height=Math.max(pct,2)+'%';}
+    if(lbl)lbl.textContent=pct+'%';
+  }
 }
 
 function updateBranchDisplay(){
@@ -993,6 +1084,7 @@ window.clearLog=()=>{document.getElementById('log-body').innerHTML='';logCount=0
 ═══════════════════════════════════════════════════════ */
 function sendPacket(){
   const algo=document.getElementById('algo-sel').value;
+  _lastAlgo=algo;
   const src=HOSTS[Math.floor(Math.random()*10)];
   const path=selectPath(algo,src);
 
@@ -1003,17 +1095,27 @@ function sendPacket(){
 
   const color=pathColor(path);
   const branch=getL1(path);
-  livePackets.push(new Packet(path,color));
+  const pkt=new Packet(path,color);
+  livePackets.push(pkt);
   packetsSent++;
+  if(algoStats[algo])algoStats[algo].sent++;
   updateUtil(path);
 
   if(branch){
     branchStats[branch]++;branchStats.total++;
   }
 
+  // Track delivery per algo (override finish to capture algo context)
+  const _origFinish=pkt.finish.bind(pkt);
+  pkt.finish=function(){
+    _origFinish();
+    if(!this.dropped && algoStats[algo])algoStats[algo].delivered++;
+    updateEffChart();
+  };
+
   const hops=path.length-1;
   const pathStr=path.join('→');
-  const dropped=livePackets[livePackets.length-1].dropped;
+  const dropped=pkt.dropped;
   addLog(dropped?'err':'route',`${src}→DST via ${branch||'?'} | ${hops} hops | ${pathStr}`);
   updateStats(path);
 }
